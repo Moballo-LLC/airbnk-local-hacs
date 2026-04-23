@@ -22,6 +22,10 @@ EXPECTED_SIZES = {
     "dark_icon.png": (256, 256),
     "icon@2x.png": (512, 512),
     "dark_icon@2x.png": (512, 512),
+    "logo.png": (256, 256),
+    "dark_logo.png": (256, 256),
+    "logo@2x.png": (512, 512),
+    "dark_logo@2x.png": (512, 512),
 }
 
 
@@ -33,8 +37,8 @@ def test_brand_assets_use_supported_home_assistant_filenames() -> None:
     assert files <= SUPPORTED_FILES
 
 
-def test_brand_icons_are_valid_pngs_with_expected_sizes() -> None:
-    """The shipped icon assets should match the Home Assistant brand spec."""
+def test_brand_assets_are_valid_pngs_with_expected_sizes() -> None:
+    """The shipped brand assets should match the Home Assistant brand spec."""
 
     for name, expected_size in EXPECTED_SIZES.items():
         path = BRAND_DIR / name

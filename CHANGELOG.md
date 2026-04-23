@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.0.6 - 2026-04-23
+
+- Added the full local Home Assistant brand asset set (`logo`, `dark_logo`, and `@2x` variants) alongside the existing icon files so every current brand-image filename is present in the repo
+- Expanded the brand-asset regression test to validate the full shipped brand set instead of only the icon files
+
 ## 1.0.5 - 2026-04-23
 
 - Moved the cloud verification-code and auth flow back onto Home Assistant's native aiohttp client stack after the earlier `requests` detour did not resolve real-world timeout failures
