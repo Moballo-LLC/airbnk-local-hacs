@@ -264,5 +264,6 @@ This repository is now shaped to make a future Home Assistant core submission ea
 - User-tunable behavior now lives in `ConfigEntry.options`, while connection/bootstrap data stays in `ConfigEntry.data`.
 - Removing an entry triggers Bluetooth rediscovery so the lock can be found again without restarting Home Assistant.
 - `quality_scale.yaml` is included to track bronze-level core readiness work.
+- Local custom-integration brand assets now live in `custom_components/airbnk_ble/brand/`, which matches the current custom-integration/HACS packaging guidance. If this project moves into Home Assistant Core, those local brand files should be removed and submitted to `home-assistant/brands` instead.
 
 The main remaining blocker for a real core PR is dependency transparency. Home Assistant's core submission docs require the Airbnk communication layer to live in a separately published, reusable Python library on PyPI rather than inside the integration repo itself. Until that library exists, this project is best treated as a polished custom integration/HACS package that is intentionally being kept close to core expectations.
