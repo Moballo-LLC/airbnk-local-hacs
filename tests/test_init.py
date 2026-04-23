@@ -72,6 +72,10 @@ async def test_async_setup_entry_normalizes_legacy_entry_data(
     runtime_cls.assert_called_once()
     update_entry.assert_called_once()
     assert update_entry.call_args.kwargs["options"]["name"] == "Front Gate"
+    assert (
+        update_entry.call_args.kwargs["options"]["publish_diagnostic_entities"]
+        is False
+    )
     assert entry.runtime_data is runtime
 
 

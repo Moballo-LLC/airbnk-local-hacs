@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.7 - 2026-04-23
+
+- Added a per-lock custom `mdi:` icon option in setup and the Settings UI, including mailbox-style state-aware icon handling for users who want the old mailbox visuals back
+- Added a per-lock `Publish extra diagnostic entities` option so users can keep the entity list clean by default while still opting into extra BLE health diagnostics when needed
+- Kept the useful battery health entities available by default while trimming the diagnostic surface to the minimal set: Battery and Battery Low always, plus optional Connectivity, Battery Voltage, and Signal Strength
+- Removed the raw/internal advert and status debug entities from the published entity surface, leaving deeper troubleshooting details to downloaded diagnostics instead of cluttering the registry
+
 ## 1.0.6 - 2026-04-23
 
 - Added the full local Home Assistant brand asset set (`logo`, `dark_logo`, and `@2x` variants) alongside the existing icon files so every current brand-image filename is present in the repo

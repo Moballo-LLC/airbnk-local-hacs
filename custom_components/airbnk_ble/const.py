@@ -19,11 +19,13 @@ CONF_COMMAND_TIMEOUT = "command_timeout"
 CONF_CONNECTIVITY_PROBE_INTERVAL = "connectivity_probe_interval"
 CONF_DISCOVERED_ADDRESS = "discovered_address"
 CONF_HARDWARE_VERSION = "hardware_version"
+CONF_LOCK_ICON = "lock_icon"
 CONF_LOCK_MODEL = "lock_model"
 CONF_LOCK_SN = "lock_sn"
 CONF_MAC_ADDRESS = "mac_address"
 CONF_MANUFACTURER_KEY = "manufacturer_key"
 CONF_NEW_SNINFO = "new_sninfo"
+CONF_PUBLISH_DIAGNOSTIC_ENTITIES = "publish_diagnostic_entities"
 CONF_PROFILE = "profile"
 CONF_REVERSE_COMMANDS = "reverse_commands"
 CONF_RETRY_COUNT = "retry_count"
@@ -35,6 +37,8 @@ CONF_VOLTAGE_THRESHOLDS = "voltage_thresholds"
 DEFAULT_NAME = "Airbnk Lock"
 DEFAULT_COMMAND_TIMEOUT = 15
 DEFAULT_CONNECTIVITY_PROBE_INTERVAL = 0
+DEFAULT_LOCK_ICON = ""
+DEFAULT_PUBLISH_DIAGNOSTIC_ENTITIES = False
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_REVERSE_COMMANDS = False
 DEFAULT_SUPPORTS_REMOTE_LOCK = False
@@ -62,21 +66,11 @@ LOCK_STATE_JAMMED = 2
 OPERATION_UNLOCK = 1
 OPERATION_LOCK = 2
 
-HIDDEN_BY_DEFAULT_SENSOR_KEYS = frozenset(
-    {
-        "state_source",
-        "lock_events_counter",
-    }
-)
+HIDDEN_BY_DEFAULT_SENSOR_KEYS: frozenset[str] = frozenset()
 
 DISABLED_BY_DEFAULT_SENSOR_KEYS = frozenset(
     {
-        "advert_state_byte",
-        "advert_state_bits",
-        "advert_state_meaning",
-        "status_state_byte",
-        "status_state_bits",
-        "status_state_meaning",
-        "status_tail_byte",
+        "battery_voltage",
+        "signal_strength",
     }
 )

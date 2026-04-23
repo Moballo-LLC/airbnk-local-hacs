@@ -60,6 +60,8 @@
         "description": "Configure the local Bluetooth settings for serial {serial} ({model}).",
         "data": {
           "name": "Name",
+          "lock_icon": "Custom icon (mdi:...)",
+          "publish_diagnostic_entities": "Publish extra diagnostic entities",
           "discovered_address": "Discovered Bluetooth address",
           "mac_address": "Manual MAC address",
           "reverse_commands": "Reverse lock and unlock commands",
@@ -71,6 +73,8 @@
         },
         "data_description": {
           "name": "Friendly lock name shown in Home Assistant.",
+          "lock_icon": "Optional Material Design icon. Leave blank to use the standard lock icons. Example: mdi:mailbox-up-outline restores the old mailbox style.",
+          "publish_diagnostic_entities": "Battery and Battery Low stay available either way. Enable this to also publish extra Airbnk / WeHere diagnostic entities such as Connectivity, signal strength, and battery voltage.",
           "discovered_address": "Choose the Bluetooth address Home Assistant discovered for this lock whenever possible.",
           "mac_address": "Only needed when discovery could not automatically match the lock.",
           "reverse_commands": "Enable this only if lock and unlock appear reversed on your hardware.",
@@ -135,6 +139,7 @@
     "error": {
       "code_request_failed": "Could not request a verification code from the Airbnk / WeHere cloud.",
       "invalid_address": "Enter a valid Airbnk / WeHere Bluetooth MAC address.",
+      "invalid_lock_icon": "Enter a valid Material Design icon name such as mdi:mailbox-up-outline.",
       "invalid_airbnk_bootstrap": "The Airbnk / WeHere bootstrap data could not be decrypted or did not match this lock.",
       "lock_mismatch": "The manual bootstrap serial number does not match the discovered Airbnk / WeHere lock.",
       "token_retrieval_failed": "Could not authenticate with the Airbnk / WeHere cloud."
@@ -155,6 +160,8 @@
         "title": "Airbnk BLE options",
         "data": {
           "name": "Name",
+          "lock_icon": "Custom icon (mdi:...)",
+          "publish_diagnostic_entities": "Publish extra diagnostic entities",
           "reverse_commands": "Reverse lock and unlock commands",
           "supports_remote_lock": "Enable remote lock command",
           "retry_count": "Command retry count",
@@ -164,6 +171,8 @@
         },
         "data_description": {
           "name": "Friendly lock name shown in Home Assistant.",
+          "lock_icon": "Optional Material Design icon. Leave blank to use the standard lock icons. Example: mdi:mailbox-up-outline restores the old mailbox style.",
+          "publish_diagnostic_entities": "Battery and Battery Low stay available either way. Enable this to also publish extra Airbnk / WeHere diagnostic entities such as Connectivity, signal strength, and battery voltage.",
           "reverse_commands": "Enable this only if lock and unlock appear reversed on your hardware.",
           "supports_remote_lock": "Enable this only for models that support a distinct remote lock command.",
           "retry_count": "How many additional BLE command attempts Home Assistant should make after the first try.",
@@ -172,6 +181,9 @@
           "unavailable_after": "How long the lock may stay quiet before Home Assistant marks its state unavailable."
         }
       }
+    },
+    "error": {
+      "invalid_lock_icon": "Enter a valid Material Design icon name such as mdi:mailbox-up-outline."
     }
   }
 }

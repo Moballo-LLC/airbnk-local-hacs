@@ -25,12 +25,10 @@ async def async_setup_entry(
     """Set up the Airbnk binary sensors."""
 
     runtime = entry.runtime_data
-    async_add_entities(
-        [
-            AirbnkBatteryLowBinarySensor(runtime),
-            AirbnkConnectivityBinarySensor(runtime),
-        ]
-    )
+    entities: list[BinarySensorEntity] = [AirbnkBatteryLowBinarySensor(runtime)]
+    if runtime.publish_diagnostic_entities:
+        entities.append(AirbnkConnectivityBinarySensor(runtime))
+    async_add_entities(entities)
 
 
 class AirbnkBatteryLowBinarySensor(AirbnkBaseEntity, BinarySensorEntity):

@@ -39,17 +39,21 @@ from .const import (
     CONF_CONNECTIVITY_PROBE_INTERVAL,
     CONF_DISCOVERED_ADDRESS,
     CONF_HARDWARE_VERSION,
+    CONF_LOCK_ICON,
     CONF_LOCK_MODEL,
     CONF_LOCK_SN,
     CONF_MAC_ADDRESS,
     CONF_NEW_SNINFO,
+    CONF_PUBLISH_DIAGNOSTIC_ENTITIES,
     CONF_RETRY_COUNT,
     CONF_REVERSE_COMMANDS,
     CONF_SUPPORTS_REMOTE_LOCK,
     CONF_UNAVAILABLE_AFTER,
     DEFAULT_COMMAND_TIMEOUT,
     DEFAULT_CONNECTIVITY_PROBE_INTERVAL,
+    DEFAULT_LOCK_ICON,
     DEFAULT_NAME,
+    DEFAULT_PUBLISH_DIAGNOSTIC_ENTITIES,
     DEFAULT_RETRY_COUNT,
     DEFAULT_REVERSE_COMMANDS,
     DEFAULT_UNAVAILABLE_AFTER,
@@ -322,30 +326,43 @@ class AirbnkBleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     battery_profile=self._prepared_battery_profile,
                     hardware_version=self._prepared_hardware_version,
                 )
-                entry_options = build_entry_options(
-                    name=str(user_input[CONF_NAME]).strip(),
-                    lock_model=self._prepared_bootstrap.lock_model,
-                    reverse_commands=bool(user_input[CONF_REVERSE_COMMANDS]),
-                    supports_remote_lock=bool(user_input[CONF_SUPPORTS_REMOTE_LOCK]),
-                    retry_count=int(user_input[CONF_RETRY_COUNT]),
-                    command_timeout=int(user_input[CONF_COMMAND_TIMEOUT]),
-                    connectivity_probe_interval=int(
-                        user_input[CONF_CONNECTIVITY_PROBE_INTERVAL]
-                    ),
-                    unavailable_after=int(user_input[CONF_UNAVAILABLE_AFTER]),
-                )
             except AirbnkProtocolError:
                 errors["base"] = "invalid_address"
             else:
-                await self.async_set_unique_id(
-                    entry_data[CONF_LOCK_SN], raise_on_progress=False
-                )
-                self._abort_if_unique_id_configured()
-                return self.async_create_entry(
-                    title=entry_options[CONF_NAME],
-                    data=entry_data,
-                    options=entry_options,
-                )
+                try:
+                    entry_options = build_entry_options(
+                    name=str(user_input[CONF_NAME]).strip(),
+                    lock_model=self._prepared_bootstrap.lock_model,
+                    lock_icon=str(user_input.get(CONF_LOCK_ICON, "")).strip(),
+                    publish_diagnostic_entities=bool(
+                        user_input.get(
+                            CONF_PUBLISH_DIAGNOSTIC_ENTITIES,
+                            DEFAULT_PUBLISH_DIAGNOSTIC_ENTITIES,
+                        )
+                    ),
+                    reverse_commands=bool(user_input[CONF_REVERSE_COMMANDS]),
+                    supports_remote_lock=bool(
+                        user_input[CONF_SUPPORTS_REMOTE_LOCK]
+                        ),
+                        retry_count=int(user_input[CONF_RETRY_COUNT]),
+                        command_timeout=int(user_input[CONF_COMMAND_TIMEOUT]),
+                        connectivity_probe_interval=int(
+                            user_input[CONF_CONNECTIVITY_PROBE_INTERVAL]
+                        ),
+                        unavailable_after=int(user_input[CONF_UNAVAILABLE_AFTER]),
+                    )
+                except AirbnkProtocolError:
+                    errors["base"] = "invalid_lock_icon"
+                else:
+                    await self.async_set_unique_id(
+                        entry_data[CONF_LOCK_SN], raise_on_progress=False
+                    )
+                    self._abort_if_unique_id_configured()
+                    return self.async_create_entry(
+                        title=entry_options[CONF_NAME],
+                        data=entry_data,
+                        options=entry_options,
+                    )
 
         return self.async_show_form(
             step_id="confirm_lock",
@@ -671,18 +688,32 @@ class AirbnkBleOptionsFlow(config_entries.OptionsFlowWithReload):
         """Update name and runtime tuning."""
 
         if user_input is not None:
-            updated_options = build_entry_options(
-                name=str(user_input[CONF_NAME]).strip(),
-                lock_model=str(self.config_entry.data[CONF_LOCK_MODEL]),
-                reverse_commands=bool(user_input[CONF_REVERSE_COMMANDS]),
-                supports_remote_lock=bool(user_input[CONF_SUPPORTS_REMOTE_LOCK]),
-                retry_count=int(user_input[CONF_RETRY_COUNT]),
-                command_timeout=int(user_input[CONF_COMMAND_TIMEOUT]),
-                connectivity_probe_interval=int(
-                    user_input[CONF_CONNECTIVITY_PROBE_INTERVAL]
-                ),
-                unavailable_after=int(user_input[CONF_UNAVAILABLE_AFTER]),
-            )
+            try:
+                updated_options = build_entry_options(
+                    name=str(user_input[CONF_NAME]).strip(),
+                    lock_model=str(self.config_entry.data[CONF_LOCK_MODEL]),
+                    lock_icon=str(user_input.get(CONF_LOCK_ICON, "")).strip(),
+                    publish_diagnostic_entities=bool(
+                        user_input.get(
+                            CONF_PUBLISH_DIAGNOSTIC_ENTITIES,
+                            DEFAULT_PUBLISH_DIAGNOSTIC_ENTITIES,
+                        )
+                    ),
+                    reverse_commands=bool(user_input[CONF_REVERSE_COMMANDS]),
+                    supports_remote_lock=bool(user_input[CONF_SUPPORTS_REMOTE_LOCK]),
+                    retry_count=int(user_input[CONF_RETRY_COUNT]),
+                    command_timeout=int(user_input[CONF_COMMAND_TIMEOUT]),
+                    connectivity_probe_interval=int(
+                        user_input[CONF_CONNECTIVITY_PROBE_INTERVAL]
+                    ),
+                    unavailable_after=int(user_input[CONF_UNAVAILABLE_AFTER]),
+                )
+            except AirbnkProtocolError:
+                return self.async_show_form(
+                    step_id="init",
+                    data_schema=self._async_build_schema(user_input),
+                    errors={"base": "invalid_lock_icon"},
+                )
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
                 title=updated_options[CONF_NAME],
@@ -697,37 +728,51 @@ class AirbnkBleOptionsFlow(config_entries.OptionsFlowWithReload):
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_NAME, default=current_options[CONF_NAME]
-                    ): str,
-                    vol.Optional(
-                        CONF_REVERSE_COMMANDS,
-                        default=current_options[CONF_REVERSE_COMMANDS],
-                    ): bool,
-                    vol.Optional(
-                        CONF_SUPPORTS_REMOTE_LOCK,
-                        default=current_options[CONF_SUPPORTS_REMOTE_LOCK],
-                    ): bool,
-                    vol.Optional(
-                        CONF_RETRY_COUNT,
-                        default=current_options[CONF_RETRY_COUNT],
-                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=10)),
-                    vol.Optional(
-                        CONF_COMMAND_TIMEOUT,
-                        default=current_options[CONF_COMMAND_TIMEOUT],
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=120)),
-                    vol.Optional(
-                        CONF_CONNECTIVITY_PROBE_INTERVAL,
-                        default=current_options[CONF_CONNECTIVITY_PROBE_INTERVAL],
-                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=604800)),
-                    vol.Optional(
-                        CONF_UNAVAILABLE_AFTER,
-                        default=current_options[CONF_UNAVAILABLE_AFTER],
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=3600)),
-                }
-            ),
+            data_schema=self._async_build_schema(current_options),
+        )
+
+    def _async_build_schema(self, values: Mapping[str, Any]) -> vol.Schema:
+        """Build the options schema."""
+
+        return vol.Schema(
+            {
+                vol.Required(CONF_NAME, default=values[CONF_NAME]): str,
+                vol.Optional(
+                    CONF_LOCK_ICON,
+                    default=values.get(CONF_LOCK_ICON, DEFAULT_LOCK_ICON),
+                ): str,
+                vol.Optional(
+                    CONF_PUBLISH_DIAGNOSTIC_ENTITIES,
+                    default=values.get(
+                        CONF_PUBLISH_DIAGNOSTIC_ENTITIES,
+                        DEFAULT_PUBLISH_DIAGNOSTIC_ENTITIES,
+                    ),
+                ): bool,
+                vol.Optional(
+                    CONF_REVERSE_COMMANDS,
+                    default=values[CONF_REVERSE_COMMANDS],
+                ): bool,
+                vol.Optional(
+                    CONF_SUPPORTS_REMOTE_LOCK,
+                    default=values[CONF_SUPPORTS_REMOTE_LOCK],
+                ): bool,
+                vol.Optional(
+                    CONF_RETRY_COUNT,
+                    default=values[CONF_RETRY_COUNT],
+                ): vol.All(vol.Coerce(int), vol.Range(min=0, max=10)),
+                vol.Optional(
+                    CONF_COMMAND_TIMEOUT,
+                    default=values[CONF_COMMAND_TIMEOUT],
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=120)),
+                vol.Optional(
+                    CONF_CONNECTIVITY_PROBE_INTERVAL,
+                    default=values[CONF_CONNECTIVITY_PROBE_INTERVAL],
+                ): vol.All(vol.Coerce(int), vol.Range(min=0, max=604800)),
+                vol.Optional(
+                    CONF_UNAVAILABLE_AFTER,
+                    default=values[CONF_UNAVAILABLE_AFTER],
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=3600)),
+            }
         )
 
 
@@ -746,6 +791,17 @@ def _confirm_lock_schema(
 
     schema: dict[Any, Any] = {
         vol.Required(CONF_NAME, default=user_input.get(CONF_NAME, name)): str,
+        vol.Optional(
+            CONF_LOCK_ICON,
+            default=user_input.get(CONF_LOCK_ICON, DEFAULT_LOCK_ICON),
+        ): str,
+        vol.Optional(
+            CONF_PUBLISH_DIAGNOSTIC_ENTITIES,
+            default=user_input.get(
+                CONF_PUBLISH_DIAGNOSTIC_ENTITIES,
+                DEFAULT_PUBLISH_DIAGNOSTIC_ENTITIES,
+            ),
+        ): bool,
     }
 
     if candidates:

@@ -19,6 +19,27 @@ from .const import (
 )
 from .entity import AirbnkBaseEntity
 
+_LOCK_ICON_FAMILY = {
+    "locked": "mdi:lock-outline",
+    "unlocked": "mdi:lock-open-variant-outline",
+    "unknown": "mdi:lock-question",
+}
+
+_MAILBOX_ICON_FAMILY = {
+    "locked": "mdi:mailbox-up-outline",
+    "unlocked": "mdi:mailbox-open-up-outline",
+    "unknown": "mdi:mailbox-outline",
+}
+
+_ICON_FAMILY_ALIASES = {
+    "mdi:lock-outline": _LOCK_ICON_FAMILY,
+    "mdi:lock-open-variant-outline": _LOCK_ICON_FAMILY,
+    "mdi:lock-question": _LOCK_ICON_FAMILY,
+    "mdi:mailbox-up-outline": _MAILBOX_ICON_FAMILY,
+    "mdi:mailbox-open-up-outline": _MAILBOX_ICON_FAMILY,
+    "mdi:mailbox-outline": _MAILBOX_ICON_FAMILY,
+}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -78,15 +99,23 @@ class AirbnkBleLock(AirbnkBaseEntity, LockEntity, RestoreEntity):
 
     @property
     def icon(self) -> str:
-        """Return a generic lock icon using valid MDI glyphs."""
+        """Return the configured icon, preserving supported icon families."""
 
         if self._runtime.is_jammed:
             return "mdi:lock-alert-outline"
+
+        configured_icon = str(getattr(self._runtime, "lock_icon", "") or "")
+        icon_family = _ICON_FAMILY_ALIASES.get(configured_icon, None)
+        if icon_family is None:
+            if configured_icon:
+                return configured_icon
+            icon_family = _LOCK_ICON_FAMILY
+
         if self._runtime.is_locked is False:
-            return "mdi:lock-open-variant-outline"
+            return icon_family["unlocked"]
         if self._runtime.is_locked is True:
-            return "mdi:lock-outline"
-        return "mdi:lock-question"
+            return icon_family["locked"]
+        return icon_family["unknown"]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

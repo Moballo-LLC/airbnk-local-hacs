@@ -49,6 +49,8 @@ def _build_runtime():
     )
     return SimpleNamespace(
         lock_sn="B100LOCK00000001",
+        lock_icon="",
+        publish_diagnostic_entities=False,
         device_info={"identifiers": {(DOMAIN, "B100LOCK00000001")}},
         state=state,
         supports_remote_lock=False,
@@ -65,7 +67,7 @@ def _build_runtime():
 
 
 async def test_platform_setup_creates_expected_entities() -> None:
-    """Each HA platform should create its expected entities."""
+    """Useful battery entities should remain even with extra diagnostics off."""
 
     runtime = _build_runtime()
     entry = MockConfigEntry(domain=DOMAIN, title="Front Gate", data={})
@@ -77,7 +79,7 @@ async def test_platform_setup_creates_expected_entities() -> None:
         entry,
         lambda entities: added_binary.extend(entities),
     )
-    assert len(added_binary) == 2
+    assert len(added_binary) == 1
 
     added_lock = []
     await lock.async_setup_entry(
@@ -93,7 +95,52 @@ async def test_platform_setup_creates_expected_entities() -> None:
         entry,
         lambda entities: added_sensor.extend(entities),
     )
+    assert len(added_sensor) == 1
+    assert added_sensor[0]._description.key == "battery"  # noqa: SLF001
+
+
+async def test_platform_setup_creates_diagnostic_entities_when_enabled() -> None:
+    """Opting in should publish the diagnostic sensor and binary-sensor surface."""
+
+    runtime = _build_runtime()
+    runtime.publish_diagnostic_entities = True
+    entry = MockConfigEntry(domain=DOMAIN, title="Front Gate", data={})
+    entry.runtime_data = runtime
+
+    added_binary = []
+    await binary_sensor.async_setup_entry(
+        None,
+        entry,
+        lambda entities: added_binary.extend(entities),
+    )
+    assert len(added_binary) == 2
+
+    added_sensor = []
+    await sensor.async_setup_entry(
+        None,
+        entry,
+        lambda entities: added_sensor.extend(entities),
+    )
     assert len(added_sensor) == len(sensor.SENSORS)
+    assert [entity._description.key for entity in added_sensor] == [  # noqa: SLF001
+        "battery",
+        "battery_voltage",
+        "signal_strength",
+    ]
+    assert [entity._attr_name for entity in added_binary] == [  # noqa: SLF001
+        "Battery Low",
+        "Connectivity",
+    ]
+
+
+def test_sensor_catalog_stays_minimal_and_excludes_raw_debug_entities() -> None:
+    """Only the trimmed battery and extra BLE health sensors should remain."""
+
+    assert [description.key for description in sensor.SENSORS] == [
+        "battery",
+        "battery_voltage",
+        "signal_strength",
+    ]
 
 
 async def test_entities_expose_runtime_state_and_commands() -> None:
@@ -111,14 +158,24 @@ async def test_entities_expose_runtime_state_and_commands() -> None:
     assert connectivity.extra_state_attributes["fresh_state_available"] is False
     assert connectivity.extra_state_attributes["last_probe_successful"] is True
 
-    battery_sensor = sensor.AirbnkBleSensor(runtime, sensor.SENSORS[1])
+    battery_description = next(
+        description for description in sensor.SENSORS if description.key == "battery"
+    )
+    battery_sensor = sensor.AirbnkBleSensor(runtime, battery_description)
     assert battery_sensor.device_info == runtime.device_info
     assert battery_sensor.available is True
     assert battery_sensor.native_value == 80.0
     assert battery_sensor.entity_category == EntityCategory.DIAGNOSTIC
 
-    hidden_sensor = sensor.AirbnkBleSensor(runtime, sensor.SENSORS[0])
-    assert hidden_sensor.entity_registry_visible_default is False
+    signal_strength_description = next(
+        description
+        for description in sensor.SENSORS
+        if description.key == "signal_strength"
+    )
+    signal_strength_sensor = sensor.AirbnkBleSensor(
+        runtime, signal_strength_description
+    )
+    assert signal_strength_sensor.entity_registry_enabled_default is False
 
     lock_entity = lock.AirbnkBleLock(runtime)
     assert lock_entity.available is True
@@ -137,11 +194,38 @@ async def test_entities_expose_runtime_state_and_commands() -> None:
     runtime.async_open.assert_awaited_once()
 
 
+async def test_lock_entity_supports_mailbox_and_custom_icons() -> None:
+    """Lock entities should honor configured icon styles per lock."""
+
+    runtime = _build_runtime()
+    lock_entity = lock.AirbnkBleLock(runtime)
+
+    runtime.lock_icon = "mdi:mailbox-up-outline"
+    runtime.is_locked = True
+    assert lock_entity.icon == "mdi:mailbox-up-outline"
+
+    runtime.is_locked = False
+    assert lock_entity.icon == "mdi:mailbox-open-up-outline"
+
+    runtime.is_locked = None
+    assert lock_entity.icon == "mdi:mailbox-outline"
+
+    runtime.lock_icon = "mdi:package-variant-closed"
+    runtime.is_locked = True
+    assert lock_entity.icon == "mdi:package-variant-closed"
+
+    runtime.is_locked = False
+    assert lock_entity.icon == "mdi:package-variant-closed"
+
+
 async def test_base_entity_subscribes_on_added_to_hass() -> None:
     """Base entities should subscribe to runtime callbacks when added."""
 
     runtime = _build_runtime()
-    battery_sensor = sensor.AirbnkBleSensor(runtime, sensor.SENSORS[1])
+    battery_description = next(
+        description for description in sensor.SENSORS if description.key == "battery"
+    )
+    battery_sensor = sensor.AirbnkBleSensor(runtime, battery_description)
     battery_sensor.async_on_remove = MagicMock()
 
     with patch(

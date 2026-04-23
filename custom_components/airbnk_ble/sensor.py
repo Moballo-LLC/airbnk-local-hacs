@@ -16,7 +16,6 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     EntityCategory,
     UnitOfElectricPotential,
-    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -41,14 +40,7 @@ class AirbnkSensorDescription:
     entity_registry_visible_default: bool = True
 
 
-_SENSOR_DESCRIPTIONS: tuple[AirbnkSensorDescription, ...] = (
-    AirbnkSensorDescription(
-        key="state_source",
-        name="State Source",
-        native_value=lambda runtime: runtime.state.last_source,
-        available=lambda runtime: runtime.state.last_source is not None,
-        icon="mdi:source-branch",
-    ),
+_BASE_SENSOR_DESCRIPTIONS: tuple[AirbnkSensorDescription, ...] = (
     AirbnkSensorDescription(
         key="battery",
         name="Battery",
@@ -58,6 +50,9 @@ _SENSOR_DESCRIPTIONS: tuple[AirbnkSensorDescription, ...] = (
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+)
+
+_OPTIONAL_DIAGNOSTIC_SENSOR_DESCRIPTIONS: tuple[AirbnkSensorDescription, ...] = (
     AirbnkSensorDescription(
         key="battery_voltage",
         name="Battery Voltage",
@@ -77,107 +72,10 @@ _SENSOR_DESCRIPTIONS: tuple[AirbnkSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:signal",
     ),
-    AirbnkSensorDescription(
-        key="last_advert_age",
-        name="Last Advert Age",
-        native_value=lambda runtime: (
-            round(runtime.last_advert_age_seconds, 1)
-            if runtime.last_advert_age_seconds is not None
-            else None
-        ),
-        available=lambda runtime: runtime.last_advert_age_seconds is not None,
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:timer-outline",
-    ),
-    AirbnkSensorDescription(
-        key="lock_events_counter",
-        name="Lock Events Counter",
-        native_value=lambda runtime: runtime.state.lock_events,
-        available=lambda runtime: runtime.state.lock_events is not None,
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        icon="mdi:counter",
-    ),
-    AirbnkSensorDescription(
-        key="advert_state_byte",
-        name="Advert State Byte",
-        native_value=lambda runtime: (
-            f"0x{runtime.state.advert_state_flags:02X}"
-            if runtime.state.advert_state_flags is not None
-            else None
-        ),
-        available=lambda runtime: runtime.state.advert_state_flags is not None,
-        icon="mdi:hexadecimal",
-    ),
-    AirbnkSensorDescription(
-        key="advert_state_bits",
-        name="Advert State Bits",
-        native_value=lambda runtime: (
-            f"0x{((runtime.state.advert_state_flags >> 4) & 0x03):X}"
-            if runtime.state.advert_state_flags is not None
-            else None
-        ),
-        available=lambda runtime: runtime.state.advert_state_flags is not None,
-        icon="mdi:lock-outline",
-    ),
-    AirbnkSensorDescription(
-        key="advert_state_meaning",
-        name="Advert State Meaning",
-        native_value=lambda runtime: runtime.state.advert_state_label,
-        available=lambda runtime: runtime.state.advert_state_label is not None,
-        icon="mdi:text-box-search-outline",
-    ),
-    AirbnkSensorDescription(
-        key="status_state_byte",
-        name="Status State Byte",
-        native_value=lambda runtime: (
-            f"0x{runtime.state.status_state_byte:02X}"
-            if runtime.state.status_state_byte is not None
-            else None
-        ),
-        available=lambda runtime: runtime.state.status_state_byte is not None,
-        icon="mdi:hexadecimal",
-    ),
-    AirbnkSensorDescription(
-        key="status_state_bits",
-        name="Status State Bits",
-        native_value=lambda runtime: (
-            f"0x{runtime.state.status_state_nibble:X}"
-            if runtime.state.status_state_nibble is not None
-            else None
-        ),
-        available=lambda runtime: runtime.state.status_state_nibble is not None,
-        icon="mdi:lock-outline",
-    ),
-    AirbnkSensorDescription(
-        key="status_state_meaning",
-        name="Status State Meaning",
-        native_value=lambda runtime: runtime.state.status_state_label,
-        available=lambda runtime: runtime.state.status_state_label is not None,
-        icon="mdi:text-box-search-outline",
-    ),
-    AirbnkSensorDescription(
-        key="status_tail_byte",
-        name="Status Tail Byte",
-        native_value=lambda runtime: (
-            f"0x{runtime.state.status_trailing_byte:02X}"
-            if runtime.state.status_trailing_byte is not None
-            else None
-        ),
-        available=lambda runtime: runtime.state.status_trailing_byte is not None,
-        icon="mdi:hexadecimal",
-    ),
-    AirbnkSensorDescription(
-        key="last_error",
-        name="Last Error",
-        native_value=lambda runtime: runtime.state.last_error,
-        available=lambda runtime: True,
-        icon="mdi:alert-circle-outline",
-    ),
 )
 
 
-SENSORS = tuple(
+BASE_SENSORS = tuple(
     replace(
         description,
         entity_registry_enabled_default=description.key
@@ -185,8 +83,21 @@ SENSORS = tuple(
         entity_registry_visible_default=description.key
         not in HIDDEN_BY_DEFAULT_SENSOR_KEYS,
     )
-    for description in _SENSOR_DESCRIPTIONS
+    for description in _BASE_SENSOR_DESCRIPTIONS
 )
+
+OPTIONAL_DIAGNOSTIC_SENSORS = tuple(
+    replace(
+        description,
+        entity_registry_enabled_default=description.key
+        not in DISABLED_BY_DEFAULT_SENSOR_KEYS,
+        entity_registry_visible_default=description.key
+        not in HIDDEN_BY_DEFAULT_SENSOR_KEYS,
+    )
+    for description in _OPTIONAL_DIAGNOSTIC_SENSOR_DESCRIPTIONS
+)
+
+SENSORS = BASE_SENSORS + OPTIONAL_DIAGNOSTIC_SENSORS
 
 
 async def async_setup_entry(
@@ -197,8 +108,11 @@ async def async_setup_entry(
     """Set up the Airbnk sensors."""
 
     runtime = entry.runtime_data
+    descriptions = list(BASE_SENSORS)
+    if runtime.publish_diagnostic_entities:
+        descriptions.extend(OPTIONAL_DIAGNOSTIC_SENSORS)
     async_add_entities(
-        [AirbnkBleSensor(runtime, description) for description in SENSORS]
+        [AirbnkBleSensor(runtime, description) for description in descriptions]
     )
 
 

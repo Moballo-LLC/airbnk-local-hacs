@@ -148,6 +148,7 @@ def test_entry_options_prefer_options_but_fall_back_to_legacy_data() -> None:
         lock_model="B100",
         legacy_data={
             "name": "Legacy Name",
+            "lock_icon": "mdi:mailbox-up-outline",
             "reverse_commands": True,
             "supports_remote_lock": True,
             "retry_count": 3,
@@ -158,6 +159,8 @@ def test_entry_options_prefer_options_but_fall_back_to_legacy_data() -> None:
     )
 
     assert normalized["name"] == "Front Door"
+    assert normalized["lock_icon"] == "mdi:mailbox-up-outline"
+    assert normalized["publish_diagnostic_entities"] is False
     assert normalized["retry_count"] == 5
     assert normalized["reverse_commands"] is True
     assert normalized["supports_remote_lock"] is True
@@ -175,9 +178,49 @@ def test_build_entry_options_normalizes_defaults_for_model() -> None:
     )
 
     assert options["name"] == "Front Gate"
+    assert options["lock_icon"] == ""
+    assert options["publish_diagnostic_entities"] is False
     assert options["reverse_commands"] is False
     assert options["supports_remote_lock"] is False
     assert options["retry_count"] == 3
+
+
+def test_build_entry_options_normalizes_custom_icon() -> None:
+    """Custom icons should normalize into lowercase mdi names."""
+
+    options = build_entry_options(
+        name="Front Gate",
+        lock_model="B100",
+        lock_icon=" MDI:Mailbox-Up-Outline ",
+    )
+
+    assert options["lock_icon"] == "mdi:mailbox-up-outline"
+
+
+def test_build_entry_options_can_enable_diagnostic_entities() -> None:
+    """Diagnostic entities should be opt-in and persist in options."""
+
+    options = build_entry_options(
+        name="Front Gate",
+        lock_model="B100",
+        publish_diagnostic_entities=True,
+    )
+
+    assert options["publish_diagnostic_entities"] is True
+
+
+def test_validate_entry_options_rejects_invalid_custom_icon() -> None:
+    """Only valid mdi icons should be accepted for the optional custom icon."""
+
+    try:
+        validate_entry_options(
+            {"lock_icon": "mailbox"},
+            lock_model="B100",
+        )
+    except ValueError as err:
+        assert "lock_icon" in str(err)
+    else:
+        raise AssertionError("invalid icon should raise")
 
 
 def test_parsers_decode_advert_and_status_frames() -> None:
