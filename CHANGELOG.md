@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.0.4 - 2026-04-23
+
+- Restored narrow Bluetooth auto-discovery matching for Airbnk / WeHere locks by matching the Airbnk vendor ID or the known Airbnk advert service UUID instead of requiring a stricter manufacturer payload prefix
+- Removed the redundant `requests` manifest requirement so the custom integration only declares non-Core runtime dependencies
+- Documented the remaining Home Assistant Core blockers in the repo guidance and `quality_scale.yaml`, including the future external async library extraction and brand migration path
+
 ## 1.0.3 - 2026-04-23
 
 - Switched the Airbnk / WeHere cloud bootstrap flow onto an executor-backed HTTP transport, matching the older working integration style more closely than the previous `aiohttp` path

@@ -6,6 +6,9 @@ rules:
     status: exempt
     comment: The integration is driven by Bluetooth advertisements and on-demand BLE commands instead of scheduled polling.
   brands: done
+  dependency_transparency:
+    status: todo
+    comment: A future Home Assistant Core submission still requires extracting the Airbnk protocol and cloud communication into a separately published PyPI library with transparent public releases.
   common_modules: done
   config_flow: done
   config_flow_test_coverage: done
@@ -19,6 +22,12 @@ rules:
   entity_event_setup: done
   entity_unique_id: done
   has_entity_name: done
+  inject_websession:
+    status: todo
+    comment: The future external communication library should accept an aiohttp or httpx client from Home Assistant instead of owning its own transport decisions.
   reconfiguration_flow: done
   runtime_data: done
+  async_dependency:
+    status: todo
+    comment: The current custom integration keeps a requests-based cloud helper for reliability, but a Core-ready extraction should be fully asyncio-native.
   unique_config_entry: done

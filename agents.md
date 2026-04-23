@@ -29,6 +29,7 @@
 ## Repo Workflow
 
 - Keep the repo HACS-ready: `hacs.json`, CI, Hassfest, and secret scanning should continue to pass.
+- Keep custom-integration manifests limited to requirements that are not already bundled by Home Assistant Core.
 - Update tests with behavior changes; protocol, config flow, and diagnostics coverage are all important here.
 - Small commits are fine when they help keep the refactor organized.
 
@@ -38,3 +39,4 @@
 - Prefer `ConfigEntry.data` only for connection/bootstrap material and `ConfigEntry.options` for user-tunable behavior.
 - Track core-readiness work in `custom_components/airbnk_ble/quality_scale.yaml`.
 - A future core submission still requires extracting the Airbnk communication logic into a separately published async Python library that satisfies Home Assistant dependency-transparency rules.
+- A future core submission also requires moving brand assets out of the local `brand/` directory and into `home-assistant/brands`.

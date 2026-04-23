@@ -341,22 +341,28 @@ async def test_options_flow_updates_entry_options_without_touching_connection_da
     assert entry.title == "Front Door"
 
 
-def test_manifest_bluetooth_matchers_cover_company_id_and_fallback_paths() -> None:
-    """Manifest discovery should use the specific vendor matcher."""
+def test_manifest_bluetooth_matchers_cover_vendor_and_service_uuid() -> None:
+    """Manifest discovery should use narrow vendor and advert-service matchers."""
 
     bluetooth_matchers = [matcher for matcher in _load_manifest()["bluetooth"]]
 
     assert bluetooth_matchers == [
         {
             "connectable": True,
-            "manufacturer_data_start": [186, 186],
             "manufacturer_id": MANUFACTURER_ID_AIRBNK,
+        },
+        {
+            "connectable": True,
+            "service_uuid": "0000abab-0000-1000-8000-00805f9b34fb",
         }
     ]
     assert {
         "connectable": True,
-        "manufacturer_data_start": [186, 186],
         "manufacturer_id": MANUFACTURER_ID_AIRBNK,
+    } in bluetooth_matchers
+    assert {
+        "connectable": True,
+        "service_uuid": "0000abab-0000-1000-8000-00805f9b34fb",
     } in bluetooth_matchers
 
 

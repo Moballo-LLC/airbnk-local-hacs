@@ -4,8 +4,11 @@
   "bluetooth": [
     {
       "connectable": true,
-      "manufacturer_data_start": [186, 186],
       "manufacturer_id": 47802
+    },
+    {
+      "connectable": true,
+      "service_uuid": "0000abab-0000-1000-8000-00805f9b34fb"
     }
   ],
   "codeowners": ["@Jason-Morcos"],
@@ -16,6 +19,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Moballo-LLC/airbnk-ble/issues",
   "loggers": ["custom_components.airbnk_ble"],
-  "requirements": ["requests>=2.32.0"],
-  "version": "1.0.3"
+  "version": "1.0.4"
 }
