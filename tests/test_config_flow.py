@@ -224,8 +224,8 @@ async def test_options_flow_updates_entry_options_without_touching_connection_da
             "lock_model": "B100",
             "profile": "b100",
             "mac_address": "AA:BB:CC:DD:EE:FF",
-            "manufacturer_key": "30313233343536373839414243444546",
-            "binding_key": "46454443424139383736353433323130",
+            "manufacturer_key": "fixture-manufacturer-key",
+            "binding_key": "fixture-binding-key",
             "battery_profile": [
                 {"voltage": 2.3, "percent": 0.0},
                 {"voltage": 2.9, "percent": 100.0},

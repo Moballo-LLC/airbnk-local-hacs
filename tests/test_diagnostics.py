@@ -26,8 +26,8 @@ async def test_diagnostics_redact_sensitive_fields(
         data={
             "lock_sn": "SECRET-SN",
             "mac_address": "AA:BB:CC:DD:EE:FF",
-            "manufacturer_key": "deadbeef",
-            "binding_key": "beefdead",
+            "manufacturer_key": "fixture-manufacturer-key",
+            "binding_key": "fixture-binding-key",
         },
         options={"name": "Front Gate"},
     )
@@ -67,8 +67,8 @@ async def test_device_diagnostics_include_device_metadata(
         data={
             "lock_sn": "SECRET-SN",
             "mac_address": "AA:BB:CC:DD:EE:FF",
-            "manufacturer_key": "deadbeef",
-            "binding_key": "beefdead",
+            "manufacturer_key": "fixture-manufacturer-key",
+            "binding_key": "fixture-binding-key",
         },
         options={"name": "Front Gate"},
     )
