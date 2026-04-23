@@ -23,6 +23,7 @@ from .airbnk import (
     normalize_mac_address,
     parse_advertisement_data,
     serial_numbers_match,
+    validate_entry_data,
 )
 from .cloud_api import (
     AirbnkCloudClient,
@@ -31,6 +32,7 @@ from .cloud_api import (
     AirbnkCloudSession,
 )
 from .const import (
+    CONF_APP_KEY,
     CONF_BATTERY_PROFILE,
     CONF_COMMAND_TIMEOUT,
     CONF_CONNECTIVITY_PROBE_INTERVAL,
@@ -51,17 +53,18 @@ from .const import (
     DEFAULT_UNAVAILABLE_AFTER,
     DISCOVERED_ADDRESS_MANUAL,
     DOMAIN,
+    LEGACY_DOMAIN,
     MANUFACTURER_ID_AIRBNK,
     SETUP_MODE_CLOUD,
+    SETUP_MODE_IMPORT_MORCOS,
     SETUP_MODE_MANUAL,
 )
 from .profiles import MODEL_PROFILE_BY_KEY, get_model_profile
 
-CONF_APP_KEY = "app_key"
 CONF_AUTH_CODE = "auth_code"
+CONF_SELECTED_LEGACY_ENTRY = "selected_legacy_entry"
 CONF_SELECTED_LOCK = "selected_lock"
 
-_MENU_OPTIONS = [SETUP_MODE_CLOUD, SETUP_MODE_MANUAL]
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -116,7 +119,50 @@ class AirbnkBleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, _user_input: dict[str, Any] | None = None):
         """Show the setup-mode menu."""
 
-        return self.async_show_menu(step_id="user", menu_options=_MENU_OPTIONS)
+        menu_options = [SETUP_MODE_CLOUD, SETUP_MODE_MANUAL]
+        if self._async_legacy_entries():
+            menu_options.append(SETUP_MODE_IMPORT_MORCOS)
+        return self.async_show_menu(step_id="user", menu_options=menu_options)
+
+    async def async_step_import_morcos(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ):
+        """Import a legacy Morcos Airbnk BLE entry."""
+
+        legacy_entries = self._async_legacy_entries()
+        if not legacy_entries:
+            return self.async_abort(reason="no_legacy_entries")
+
+        if user_input is not None:
+            selected_entry_id = str(user_input[CONF_SELECTED_LEGACY_ENTRY])
+            legacy_entry = next(
+                (
+                    entry
+                    for entry in legacy_entries
+                    if entry.entry_id == selected_entry_id
+                ),
+                None,
+            )
+            if legacy_entry is None:
+                return self.async_abort(reason="no_legacy_entries")
+            return await self._async_import_legacy_entry(legacy_entry)
+
+        options = {
+            entry.entry_id: (
+                f"{entry.title or entry.data.get(CONF_NAME, DEFAULT_NAME)} "
+                f"({entry.data.get(CONF_LOCK_SN, 'unknown serial')})"
+            )
+            for entry in legacy_entries
+        }
+        return self.async_show_form(
+            step_id=SETUP_MODE_IMPORT_MORCOS,
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_SELECTED_LEGACY_ENTRY): vol.In(options),
+                }
+            ),
+        )
 
     async def async_step_cloud(self, user_input: dict[str, Any] | None = None):
         """Start cloud-assisted onboarding."""
@@ -637,6 +683,43 @@ class AirbnkBleConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self._cloud_client is None:
             self._cloud_client = AirbnkCloudClient(self.hass)
         return self._cloud_client
+
+    @callback
+    def _async_legacy_entries(self) -> list[config_entries.ConfigEntry]:
+        """Return importable legacy Morcos config entries."""
+
+        configured_serials = {
+            str(entry.unique_id or entry.data.get(CONF_LOCK_SN, "")).strip()
+            for entry in self._async_current_entries()
+        }
+        legacy_entries: list[config_entries.ConfigEntry] = []
+        for entry in self.hass.config_entries.async_entries(LEGACY_DOMAIN):
+            serial = str(entry.unique_id or entry.data.get(CONF_LOCK_SN, "")).strip()
+            if serial and serial in configured_serials:
+                continue
+            legacy_entries.append(entry)
+        return legacy_entries
+
+    async def _async_import_legacy_entry(
+        self,
+        legacy_entry: config_entries.ConfigEntry,
+    ):
+        """Convert a legacy Morcos entry into the public Airbnk BLE format."""
+
+        try:
+            entry_data, _bootstrap = validate_entry_data(legacy_entry.data)
+        except AirbnkProtocolError:
+            return self.async_abort(reason="invalid_legacy_entry")
+
+        await self.async_set_unique_id(
+            entry_data[CONF_LOCK_SN],
+            raise_on_progress=False,
+        )
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(
+            title=entry_data[CONF_NAME],
+            data=entry_data,
+        )
 
 
 class AirbnkBleOptionsFlow(config_entries.OptionsFlow):

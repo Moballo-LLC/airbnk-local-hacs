@@ -8,12 +8,14 @@ from unittest.mock import AsyncMock, patch
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL
 from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.airbnk_ble.cloud_api import AirbnkCloudLock, AirbnkCloudSession
 from custom_components.airbnk_ble.const import (
     CONF_LOCK_SN,
     CONF_MAC_ADDRESS,
     DOMAIN,
+    LEGACY_DOMAIN,
 )
 
 from .common import build_advertisement_payload, build_bootstrap_fixture
@@ -165,3 +167,59 @@ async def test_cloud_flow_prefers_matching_discovered_lock(
         assert result["type"] == "create_entry"
         assert result["data"][CONF_LOCK_SN] == fixture["lock_sn"]
         assert result["data"][CONF_MAC_ADDRESS] == "AA:BB:CC:DD:EE:FF"
+
+
+async def test_import_morcos_flow_converts_legacy_entry_without_raw_secrets(
+    hass: HomeAssistant,
+) -> None:
+    """Legacy Morcos entries should import cleanly into Airbnk BLE."""
+
+    fixture = build_bootstrap_fixture()
+    legacy_entry = MockConfigEntry(
+        domain=LEGACY_DOMAIN,
+        title="Mailbox",
+        unique_id=fixture["lock_sn"],
+        data={
+            "name": "Mailbox",
+            "mac_address": "AA:BB:CC:DD:EE:FF",
+            "lock_sn": fixture["lock_sn"],
+            "new_sninfo": fixture["new_sninfo"],
+            "app_key": fixture["app_key"],
+            "voltage_thresholds": [2.5, 2.6, 2.9],
+            "reverse_commands": False,
+            "supports_remote_lock": False,
+            "retry_count": 3,
+            "command_timeout": 15,
+            "connectivity_probe_interval": 0,
+            "unavailable_after": 60,
+        },
+    )
+    legacy_entry.add_to_hass(hass)
+
+    with patch(
+        "homeassistant.config_entries.async_process_deps_reqs",
+        new=AsyncMock(return_value=None),
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+        )
+        assert result["type"] == "menu"
+        assert "import_morcos" in result["menu_options"]
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {"next_step_id": "import_morcos"},
+        )
+        assert result["type"] == "form"
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {"selected_legacy_entry": legacy_entry.entry_id},
+        )
+
+        assert result["type"] == "create_entry"
+        assert result["title"] == "Mailbox"
+        assert result["data"][CONF_LOCK_SN] == fixture["lock_sn"]
+        assert result["data"][CONF_MAC_ADDRESS] == "AA:BB:CC:DD:EE:FF"
+        assert "app_key" not in result["data"]
+        assert "new_sninfo" not in result["data"]

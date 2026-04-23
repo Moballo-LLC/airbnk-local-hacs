@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from custom_components.airbnk_ble.airbnk import (
+    battery_profile_from_legacy_thresholds,
     build_entry_data,
     calculate_battery_percentage,
     decrypt_bootstrap,
     generate_operation_code,
+    migrate_legacy_entry_data,
     parse_advertisement_data,
     parse_status_response,
     validate_entry_data,
@@ -81,6 +83,47 @@ def test_operation_code_generation_is_stable() -> None:
 
     assert len(operation) == 36
     assert operation[:3] == b"\xaa\x10\x1a"
+
+
+def test_legacy_morcos_entry_data_migrates_without_changing_b100_curve() -> None:
+    """Legacy Morcos entries should normalize into the public storage format."""
+
+    fixture = build_bootstrap_fixture()
+    legacy_data = {
+        "name": "Front Gate",
+        "mac_address": "AA:BB:CC:DD:EE:FF",
+        "lock_sn": fixture["lock_sn"],
+        "new_sninfo": fixture["new_sninfo"],
+        "app_key": fixture["app_key"],
+        "voltage_thresholds": [2.5, 2.6, 2.9],
+        "reverse_commands": False,
+        "supports_remote_lock": False,
+        "retry_count": 3,
+        "command_timeout": 15,
+        "connectivity_probe_interval": 0,
+        "unavailable_after": 60,
+    }
+
+    migrated = migrate_legacy_entry_data(legacy_data)
+    normalized, bootstrap = validate_entry_data(legacy_data)
+
+    assert normalized == migrated
+    assert "app_key" not in normalized
+    assert "new_sninfo" not in normalized
+    assert normalized["battery_profile"] == [
+        {"voltage": 2.5, "percent": 0.0},
+        {"voltage": 2.6, "percent": 50.0},
+        {"voltage": 2.9, "percent": 100.0},
+    ]
+    assert (
+        calculate_battery_percentage(
+            2.55,
+            battery_profile_from_legacy_thresholds([2.5, 2.6, 2.9]),
+        )
+        == 25.0
+    )
+    assert bootstrap.lock_model == fixture["lock_model"]
+    assert bootstrap.manufacturer_key == fixture["manufacturer_key"]
 
 
 def test_parsers_decode_advert_and_status_frames() -> None:

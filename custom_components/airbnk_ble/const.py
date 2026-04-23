@@ -5,6 +5,7 @@ from __future__ import annotations
 from homeassistant.const import Platform
 
 DOMAIN = "airbnk_ble"
+LEGACY_DOMAIN = "morcos_airbnk_ble"
 
 PLATFORMS: list[Platform] = [
     Platform.LOCK,
@@ -12,6 +13,7 @@ PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
 ]
 
+CONF_APP_KEY = "app_key"
 CONF_BATTERY_PROFILE = "battery_profile"
 CONF_BINDING_KEY = "binding_key"
 CONF_COMMAND_TIMEOUT = "command_timeout"
@@ -29,6 +31,7 @@ CONF_RETRY_COUNT = "retry_count"
 CONF_SETUP_MODE = "setup_mode"
 CONF_SUPPORTS_REMOTE_LOCK = "supports_remote_lock"
 CONF_UNAVAILABLE_AFTER = "unavailable_after"
+CONF_VOLTAGE_THRESHOLDS = "voltage_thresholds"
 
 DEFAULT_NAME = "Airbnk Lock"
 DEFAULT_COMMAND_TIMEOUT = 15
@@ -39,6 +42,7 @@ DEFAULT_SUPPORTS_REMOTE_LOCK = False
 DEFAULT_UNAVAILABLE_AFTER = 60
 
 SETUP_MODE_CLOUD = "cloud"
+SETUP_MODE_IMPORT_MORCOS = "import_morcos"
 SETUP_MODE_MANUAL = "manual"
 
 DISCOVERED_ADDRESS_MANUAL = "__manual__"

@@ -33,6 +33,13 @@
           "app_key": "appKey"
         }
       },
+      "import_morcos": {
+        "title": "Import legacy Morcos entry",
+        "description": "Import an existing Morcos Airbnk BLE config entry into the public Airbnk BLE integration. Remove the old custom component before enabling the imported lock to avoid duplicate Bluetooth control.",
+        "data": {
+          "selected_legacy_entry": "Legacy config entry"
+        }
+      },
       "confirm_lock": {
         "title": "Finish setup",
         "description": "Configure the local Bluetooth settings for serial {serial} ({model}).",
@@ -97,7 +104,9 @@
       "another_device": "The refreshed bootstrap belongs to a different Airbnk lock.",
       "cannot_connect": "The requested Airbnk operation could not be completed.",
       "invalid_airbnk_bootstrap": "The Airbnk bootstrap data could not be decrypted or did not match this lock.",
+      "invalid_legacy_entry": "The selected Morcos Airbnk BLE entry could not be imported.",
       "lock_not_found": "The selected Airbnk lock could not be found in the authenticated account.",
+      "no_legacy_entries": "No Morcos Airbnk BLE config entries are available to import.",
       "no_supported_locks": "No supported Airbnk locks were found for this account.",
       "not_airbnk_device": "The discovered Bluetooth device is not a supported Airbnk lock."
     }

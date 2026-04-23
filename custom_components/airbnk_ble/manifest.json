@@ -1,18 +1,18 @@
 {
   "domain": "airbnk_ble",
   "name": "Airbnk BLE",
-  "version": "0.1.0",
-  "config_flow": true,
-  "documentation": "https://github.com/Moballo-LLC/airbnk-ble",
-  "issue_tracker": "https://github.com/Moballo-LLC/airbnk-ble/issues",
-  "codeowners": ["@Jason-Morcos"],
-  "integration_type": "device",
-  "iot_class": "local_push",
-  "dependencies": ["bluetooth"],
   "bluetooth": [
     {
       "manufacturer_id": 47802
     }
   ],
-  "loggers": ["custom_components.airbnk_ble"]
+  "codeowners": ["@Jason-Morcos"],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "documentation": "https://github.com/Moballo-LLC/airbnk-ble",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/Moballo-LLC/airbnk-ble/issues",
+  "loggers": ["custom_components.airbnk_ble"],
+  "version": "0.1.0"
 }

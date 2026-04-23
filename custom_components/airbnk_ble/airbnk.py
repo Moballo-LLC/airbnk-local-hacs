@@ -15,6 +15,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from .const import (
+    CONF_APP_KEY,
     CONF_BATTERY_PROFILE,
     CONF_BINDING_KEY,
     CONF_COMMAND_TIMEOUT,
@@ -24,11 +25,13 @@ from .const import (
     CONF_LOCK_SN,
     CONF_MAC_ADDRESS,
     CONF_MANUFACTURER_KEY,
+    CONF_NEW_SNINFO,
     CONF_PROFILE,
     CONF_RETRY_COUNT,
     CONF_REVERSE_COMMANDS,
     CONF_SUPPORTS_REMOTE_LOCK,
     CONF_UNAVAILABLE_AFTER,
+    CONF_VOLTAGE_THRESHOLDS,
     DEFAULT_COMMAND_TIMEOUT,
     DEFAULT_CONNECTIVITY_PROBE_INTERVAL,
     DEFAULT_NAME,
@@ -258,6 +261,45 @@ def battery_profile_from_voltage_points(
     return normalize_battery_profile(breakpoints)
 
 
+def battery_profile_from_legacy_thresholds(
+    values: Sequence[Any],
+) -> tuple[BatteryBreakpoint, ...]:
+    """Convert the legacy empty-mid-full thresholds into breakpoints.
+
+    The original private BLE component exposed a smooth 0-50-100 curve across
+    the three configured thresholds. Preserve that exact behavior for imported
+    entries so a B100 migration does not change the reported battery state.
+    """
+
+    try:
+        thresholds = tuple(float(item) for item in values)
+    except TypeError as err:
+        raise AirbnkProtocolError(
+            "voltage_thresholds must be a list of 3 values"
+        ) from err
+    except ValueError as err:
+        raise AirbnkProtocolError(
+            "voltage_thresholds must contain only numbers"
+        ) from err
+
+    if len(thresholds) != 3:
+        raise AirbnkProtocolError(
+            "voltage_thresholds must contain exactly 3 values"
+        )
+    if not thresholds[0] < thresholds[1] < thresholds[2]:
+        raise AirbnkProtocolError(
+            "voltage_thresholds must be strictly increasing"
+        )
+
+    return normalize_battery_profile(
+        (
+            BatteryBreakpoint(round(thresholds[0], 3), 0.0),
+            BatteryBreakpoint(round(thresholds[1], 3), 50.0),
+            BatteryBreakpoint(round(thresholds[2], 3), 100.0),
+        )
+    )
+
+
 def calculate_battery_percentage(
     voltage: float, battery_profile: Sequence[BatteryBreakpoint]
 ) -> float:
@@ -395,10 +437,65 @@ def build_entry_data(
     }
 
 
+def migrate_legacy_entry_data(data: Mapping[str, Any]) -> dict[str, Any]:
+    """Convert the private Morcos entry format into the public storage format."""
+
+    bootstrap = decrypt_bootstrap(
+        str(data[CONF_LOCK_SN]).strip(),
+        str(data[CONF_NEW_SNINFO]).strip(),
+        str(data[CONF_APP_KEY]).strip(),
+    )
+    battery_profile = battery_profile_from_legacy_thresholds(
+        data[CONF_VOLTAGE_THRESHOLDS]
+    )
+
+    supports_remote_lock: bool | None
+    if CONF_SUPPORTS_REMOTE_LOCK in data:
+        supports_remote_lock = bool(data[CONF_SUPPORTS_REMOTE_LOCK])
+    else:
+        supports_remote_lock = None
+
+    return build_entry_data(
+        name=str(data.get("name") or DEFAULT_NAME).strip() or DEFAULT_NAME,
+        mac_address=str(data[CONF_MAC_ADDRESS]),
+        bootstrap=bootstrap,
+        battery_profile=battery_profile,
+        reverse_commands=bool(
+            data.get(CONF_REVERSE_COMMANDS, DEFAULT_REVERSE_COMMANDS)
+        ),
+        supports_remote_lock=supports_remote_lock,
+        retry_count=int(data.get(CONF_RETRY_COUNT, DEFAULT_RETRY_COUNT)),
+        command_timeout=int(data.get(CONF_COMMAND_TIMEOUT, DEFAULT_COMMAND_TIMEOUT)),
+        connectivity_probe_interval=int(
+            data.get(
+                CONF_CONNECTIVITY_PROBE_INTERVAL,
+                DEFAULT_CONNECTIVITY_PROBE_INTERVAL,
+            )
+        ),
+        unavailable_after=int(
+            data.get(CONF_UNAVAILABLE_AFTER, DEFAULT_UNAVAILABLE_AFTER)
+        ),
+        hardware_version=str(data.get(CONF_HARDWARE_VERSION, "")).strip(),
+    )
+
+
 def validate_entry_data(
     data: Mapping[str, Any],
 ) -> tuple[dict[str, Any], BootstrapData]:
     """Normalize and validate stored config-entry data."""
+
+    if (
+        (
+            CONF_LOCK_MODEL not in data
+            or CONF_MANUFACTURER_KEY not in data
+            or CONF_BINDING_KEY not in data
+            or CONF_BATTERY_PROFILE not in data
+        )
+        and CONF_NEW_SNINFO in data
+        and CONF_APP_KEY in data
+        and CONF_VOLTAGE_THRESHOLDS in data
+    ):
+        data = migrate_legacy_entry_data(data)
 
     lock_sn = str(data[CONF_LOCK_SN]).strip()
     if not lock_sn:
