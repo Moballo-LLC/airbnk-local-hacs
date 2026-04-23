@@ -6,6 +6,16 @@ This custom integration keeps lock operation local over Home Assistant Bluetooth
 
 If your lock or mobile app is branded `WeHere`, this is still the right integration. In Home Assistant and HACS, the package name is still `Airbnk BLE`.
 
+## Disclaimer
+
+This is an unofficial open-source project from the community. It is not made
+by, sponsored by, endorsed by, or otherwise affiliated with Airbnk, WeHere, or
+their vendors in any way.
+
+Use this integration at your own discretion and risk. You are responsible for
+deciding whether to connect it to your lock, Home Assistant instance, account,
+and network environment.
+
 ## Status
 
 - `B100` is the only live-tested and validated model today.
