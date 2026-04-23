@@ -9,6 +9,7 @@
 - Preserved the entered email address in the setup flow when verification-code requests fail, making retries less frustrating
 - Clarified in the cloud setup UI that Airbnk cloud access is needed only for setup or bootstrap refresh and normal lock control remains local over Bluetooth
 - Broadened Bluetooth discovery matching so locks can still be discovered when they advertise the Airbnk payload under alternate company IDs but keep the expected Airbnk service UUID or model/brand local name
+- Clarified the docs and setup wording so both Airbnk- and WeHere-branded users can find the integration and know to search for `Airbnk BLE`
 
 ## 1.0.1 - 2026-04-23
 
