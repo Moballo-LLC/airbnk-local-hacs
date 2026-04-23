@@ -241,9 +241,9 @@ That can happen with Airbnk or WeHere.
 
 The safest approach is to use a separate shared-access account for Home Assistant if possible.
 
-### I Only Care About The `B100`
+### I Have A `B100`
 
-That is the safest path today. `B100` is the only model that has been tested end to end on real hardware.
+`B100` is the model we have validated end to end on real hardware so far, so it currently has the strongest real-world coverage.
 
 ## Development
 
