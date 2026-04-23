@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.airbnk_ble import async_setup_entry
 from custom_components.airbnk_ble.cloud_api import (
     AirbnkCloudError,
     AirbnkCloudLock,
@@ -276,18 +277,19 @@ async def test_cloud_flow_keeps_email_after_verification_code_request_failure(
 async def test_options_flow_updates_entry_options_without_touching_connection_data(
     hass: HomeAssistant,
 ) -> None:
-    """Runtime tuning belongs in entry options, not connection data."""
+    """Options updates should reload cleanly without touching connection data."""
 
+    fixture = build_bootstrap_fixture()
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="Front Gate",
         data={
-            "lock_sn": "B100LOCK00000001",
-            "lock_model": "B100",
+            "lock_sn": fixture["lock_sn"],
+            "lock_model": fixture["lock_model"],
             "profile": "b100",
             "mac_address": "AA:BB:CC:DD:EE:FF",
-            "manufacturer_key": "fixture-manufacturer-key",
-            "binding_key": "fixture-binding-key",
+            "manufacturer_key": fixture["manufacturer_key"].hex(),
+            "binding_key": fixture["binding_key"].hex(),
             "battery_profile": [
                 {"voltage": 2.3, "percent": 0.0},
                 {"voltage": 2.9, "percent": 100.0},
@@ -305,15 +307,33 @@ async def test_options_flow_updates_entry_options_without_touching_connection_da
             "connectivity_probe_interval": 0,
             "unavailable_after": 60,
         },
-        unique_id="B100LOCK00000001",
+        unique_id=fixture["lock_sn"],
     )
     entry.add_to_hass(hass)
 
-    with patch(
-        "homeassistant.config_entries.async_process_deps_reqs",
-        new=AsyncMock(return_value=None),
+    runtime = SimpleNamespace(
+        async_start=AsyncMock(),
+        async_stop=MagicMock(),
+    )
+
+    with (
+        patch(
+            "custom_components.airbnk_ble.AirbnkLockRuntime",
+            return_value=runtime,
+        ),
+        patch.object(
+            hass.config_entries,
+            "async_forward_entry_setups",
+            AsyncMock(return_value=None),
+        ),
+        patch(
+            "homeassistant.config_entries.async_process_deps_reqs",
+            new=AsyncMock(return_value=None),
+        ),
     ):
+        assert await async_setup_entry(hass, entry) is True
         result = await hass.config_entries.options.async_init(entry.entry_id)
+
     assert result["type"] == "form"
     lock_icon_field = next(
         field

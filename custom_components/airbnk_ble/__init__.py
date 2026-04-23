@@ -40,7 +40,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.runtime_data = runtime
     await runtime.async_start()
     entry.async_on_unload(runtime.async_stop)
-    entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -55,9 +54,3 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Trigger Bluetooth rediscovery when an entry is removed."""
 
     bluetooth.async_rediscover_address(hass, str(entry.data[CONF_MAC_ADDRESS]))
-
-
-async def _async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload a config entry after options or reconfigure changes."""
-
-    await hass.config_entries.async_reload(entry.entry_id)

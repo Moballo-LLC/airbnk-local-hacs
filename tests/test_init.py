@@ -8,7 +8,6 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.airbnk_ble import (
-    _async_reload_entry,
     async_remove_entry,
     async_setup,
     async_setup_entry,
@@ -79,10 +78,10 @@ async def test_async_setup_entry_normalizes_legacy_entry_data(
     assert entry.runtime_data is runtime
 
 
-async def test_async_unload_and_reload_entry_delegate_to_config_entries(
+async def test_async_unload_entry_delegates_to_config_entries(
     hass: HomeAssistant,
 ) -> None:
-    """Unload and reload helpers should delegate to the HA config manager."""
+    """Unload helper should delegate to the HA config manager."""
 
     entry = MockConfigEntry(domain=DOMAIN, title="Front Gate", data={})
 
@@ -94,15 +93,6 @@ async def test_async_unload_and_reload_entry_delegate_to_config_entries(
         assert await async_unload_entry(hass, entry) is True
 
     unload_platforms.assert_awaited_once()
-
-    with patch.object(
-        hass.config_entries,
-        "async_reload",
-        AsyncMock(return_value=True),
-    ) as async_reload:
-        await _async_reload_entry(hass, entry)
-
-    async_reload.assert_awaited_once_with(entry.entry_id)
 
 
 async def test_async_remove_entry_triggers_bluetooth_rediscovery(
