@@ -1,0 +1,7 @@
+{
+  "name": "Airbnk BLE",
+  "render_readme": true,
+  "content_in_root": false,
+  "country": "US",
+  "homeassistant": "2026.4.0"
+}

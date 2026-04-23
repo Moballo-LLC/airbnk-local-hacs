@@ -1,0 +1,121 @@
+{
+  "title": "Airbnk BLE",
+  "config": {
+    "step": {
+      "cloud": {
+        "title": "Connect to Airbnk cloud",
+        "description": "Use the Airbnk or WeHere account email that can access this lock. The mobile app may sign out when the same account is reused.",
+        "data": {
+          "email": "Email"
+        }
+      },
+      "cloud_verify": {
+        "title": "Enter verification code",
+        "description": "Enter the verification code that Airbnk emailed to {email}.",
+        "data": {
+          "auth_code": "Verification code"
+        }
+      },
+      "cloud_lock": {
+        "title": "Choose a lock",
+        "description": "Select which Airbnk lock to import from the authenticated account.",
+        "data": {
+          "selected_lock": "Lock"
+        }
+      },
+      "manual": {
+        "title": "Manual bootstrap",
+        "description": "Enter the bootstrap values for one Airbnk lock. These raw values are used only to derive local keys and are not stored.",
+        "data": {
+          "name": "Name",
+          "lock_sn": "Lock serial number",
+          "new_sninfo": "newSninfo",
+          "app_key": "appKey"
+        }
+      },
+      "confirm_lock": {
+        "title": "Finish setup",
+        "description": "Configure the local Bluetooth settings for serial {serial} ({model}).",
+        "data": {
+          "name": "Name",
+          "discovered_address": "Discovered Bluetooth address",
+          "mac_address": "Manual MAC address",
+          "reverse_commands": "Reverse lock and unlock commands",
+          "supports_remote_lock": "Enable remote lock command",
+          "retry_count": "Command retry count",
+          "command_timeout": "Command timeout (seconds)",
+          "connectivity_probe_interval": "Connectivity probe interval (seconds, 0 disables)",
+          "unavailable_after": "Unavailable after (seconds)"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Airbnk BLE"
+      },
+      "rediscover_bluetooth": {
+        "title": "Refresh Bluetooth address",
+        "description": "Pick a newly discovered Bluetooth address for {device_name}, or enter one manually.",
+        "data": {
+          "discovered_address": "Discovered Bluetooth address",
+          "mac_address": "Manual MAC address"
+        }
+      },
+      "refresh_bootstrap": {
+        "title": "Refresh bootstrap"
+      },
+      "cloud_refresh": {
+        "title": "Refresh from Airbnk cloud",
+        "description": "Request a fresh verification code for the Airbnk account that can access this lock.",
+        "data": {
+          "email": "Email"
+        }
+      },
+      "cloud_refresh_verify": {
+        "title": "Enter verification code",
+        "description": "Enter the verification code that Airbnk emailed to {email}.",
+        "data": {
+          "auth_code": "Verification code"
+        }
+      },
+      "manual_refresh": {
+        "title": "Refresh from manual bootstrap",
+        "description": "Enter fresh bootstrap values for lock {serial}. These raw values are used only to derive local keys and are not stored.",
+        "data": {
+          "new_sninfo": "newSninfo",
+          "app_key": "appKey"
+        }
+      }
+    },
+    "error": {
+      "code_request_failed": "Could not request a verification code from the Airbnk cloud.",
+      "invalid_address": "Enter a valid Airbnk Bluetooth MAC address.",
+      "invalid_airbnk_bootstrap": "The Airbnk bootstrap data could not be decrypted or did not match this lock.",
+      "lock_mismatch": "The manual bootstrap serial number does not match the discovered Airbnk lock.",
+      "token_retrieval_failed": "Could not authenticate with the Airbnk cloud."
+    },
+    "abort": {
+      "already_configured": "This Airbnk lock is already configured.",
+      "another_device": "The refreshed bootstrap belongs to a different Airbnk lock.",
+      "cannot_connect": "The requested Airbnk operation could not be completed.",
+      "invalid_airbnk_bootstrap": "The Airbnk bootstrap data could not be decrypted or did not match this lock.",
+      "lock_not_found": "The selected Airbnk lock could not be found in the authenticated account.",
+      "no_supported_locks": "No supported Airbnk locks were found for this account.",
+      "not_airbnk_device": "The discovered Bluetooth device is not a supported Airbnk lock."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Airbnk BLE options",
+        "data": {
+          "name": "Name",
+          "reverse_commands": "Reverse lock and unlock commands",
+          "supports_remote_lock": "Enable remote lock command",
+          "retry_count": "Command retry count",
+          "command_timeout": "Command timeout (seconds)",
+          "connectivity_probe_interval": "Connectivity probe interval (seconds, 0 disables)",
+          "unavailable_after": "Unavailable after (seconds)"
+        }
+      }
+    }
+  }
+}

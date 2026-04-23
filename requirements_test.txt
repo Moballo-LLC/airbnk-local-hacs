@@ -1,0 +1,7 @@
+pytest
+pytest-asyncio
+pytest-homeassistant-custom-component
+aiousbwatcher
+pyserial
+ruff
+mypy
