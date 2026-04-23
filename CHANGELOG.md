@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.0.1 - 2026-04-23
+
+- Fixed the extracted `pyairbnk` direct dependency string so Hassfest accepts the manifest requirement and HACS can install the split library bridge correctly
+
 ## 2.0.0 - 2026-04-23
 
 - Extracted the protocol, cloud, and active BLE transport logic into the new standalone `pyairbnk` repository under `Moballo-LLC`, keeping Home Assistant-specific setup, discovery, and entity orchestration in `Airbnk BLE`

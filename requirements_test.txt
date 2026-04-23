@@ -1,4 +1,4 @@
-pyairbnk @ https://github.com/Moballo-LLC/pyairbnk/archive/refs/tags/v1.0.0.tar.gz
+pyairbnk@https://github.com/Moballo-LLC/pyairbnk/archive/refs/tags/v1.0.0.tar.gz
 pytest
 pytest-asyncio
 pytest-cov

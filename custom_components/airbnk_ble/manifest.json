@@ -20,7 +20,7 @@
   "issue_tracker": "https://github.com/Moballo-LLC/airbnk-ble/issues",
   "loggers": ["custom_components.airbnk_ble"],
   "requirements": [
-    "pyairbnk @ https://github.com/Moballo-LLC/pyairbnk/archive/refs/tags/v1.0.0.tar.gz"
+    "pyairbnk@https://github.com/Moballo-LLC/pyairbnk/archive/refs/tags/v1.0.0.tar.gz"
   ],
-  "version": "2.0.0"
+  "version": "2.0.1"
 }
